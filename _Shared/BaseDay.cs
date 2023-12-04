@@ -17,12 +17,12 @@ public abstract class BaseDayWithPuzzleInput : BaseDay
     protected virtual string FolderName => $"Day{Day}";
     protected virtual string FileName => "PuzzleInput.txt";
 
-    protected virtual async Task<ICollection<string>> GetPuzzleInput()
+    protected virtual async Task<IReadOnlyCollection<string>> GetPuzzleInput()
     {
         var filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, FolderName, FileName);
         return await GetInput(filePath);
     }
 
-    protected virtual async Task<ICollection<string>> GetInput(string filePath)
+    protected virtual async Task<IReadOnlyCollection<string>> GetInput(string filePath)
         => await File.ReadAllLinesAsync(filePath, Encoding.UTF8);
 }
