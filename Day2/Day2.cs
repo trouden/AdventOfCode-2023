@@ -20,9 +20,17 @@ public class Day2 : BaseDayWithPuzzleInput
         Console.WriteLine($"Sum of game ids is: {possibleGames.Select(g => g.Id).Sum()}.");
     }
 
-    public override Task SolveChallenge2()
+    public override async Task SolveChallenge2()
     {
-        return Task.CompletedTask;
+        var puzzleInput = await GetPuzzleInput();
+
+        ICollection<Game> games = puzzleInput.Select(ParseGame).ToList();
+
+        var powerSum = games
+            .Select(g => g.ColourStates.Select(cs => cs.MinimumAmount).Aggregate((long)0, (prev, next) => prev == 0 && next == 0 ? 0 : prev == 0 ? next : prev * next))
+            .Sum();
+
+        Console.WriteLine($"Sum of the power of every game is: {powerSum}.");
     }
 
     private static Game ParseGame(string puzzleInput)
