@@ -13,9 +13,6 @@ jobs:
   self-approval-action:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
       - name: Self-Approve Action
         uses: ./.github/actions/self-approval
         with:
