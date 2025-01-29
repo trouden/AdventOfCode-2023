@@ -75,7 +75,7 @@ runs:
         
         # Create JWT
         JWT="${header_payload}"."${signature}"
-        printf '%s\n' "JWT: $JWT"
+        echo "JWT=$JWT" >> $GITHUB_ENV
 
     - name: Get Installation Access Token
       shell: bash
@@ -88,13 +88,15 @@ runs:
           https://api.github.com/app/installations/${{ inputs.installation_id }}/access_tokens | \
           jq -r .token)
 
-        printf '%s\n' "INSTALL_TOKEN: $INSTALL_TOKEN"
-
         # Check if the installation token was obtained
         if [ -z "$INSTALL_TOKEN" ]; then
           echo "Failed to obtain installation access token"
           exit 1
+        else
+          echo "Succesfully retrieved intallation token."
         fi
+
+        echo "INSTALL_TOKEN=$INSTALL_TOKEN" >> $GITHUB_ENV
 
     - name: Approve PR
       shell: bash
