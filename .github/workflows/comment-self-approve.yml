@@ -15,6 +15,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Check if Comment is Approve Command
+        id: check-approval
         run: |
           COMMENT_BODY="${{ github.event.comment.body }}"
           COMMENTER="${{ github.event.comment.user.login }}"
@@ -25,16 +26,20 @@ jobs:
             echo "Approval command detected."
             if [[ "$COMMENTER" == "$PR_AUTHOR" ]]; then
               echo "Proceeding with approving PR."
+              echo "::set-output name=Approve::'true'"
             else
               echo "Commenter is not the creator of the PR, this is not allowed."
+              echo "::set-output name=Approve::'false'"
               exit 1
             fi
           else
             echo "No approval command found in comment."
+            echo "::set-output name=Approve::'false'"
             exit 0
           fi
 
       - name: Self-Approve Action
+        if: ${{ steps.check-approval.outputs.Approve }} == 'true'
         uses: ./.github/actions/self-approval
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
