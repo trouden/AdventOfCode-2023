@@ -1,4 +1,5 @@
-name: Self Approve PR
+name: Self Approve PR Action
+description: Allows approving of your own PRs.
 
 on:
   workflow_dispatch: # Allows manual triggering from GitHub Actions UI
@@ -15,90 +16,10 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Fetch PR Author
-        id: get_author
-        run: |
-          AUTHOR=$(gh pr view ${{ inputs.pr_number }} --json author --jq '.author.login')
-          echo "PR_AUTHOR=$AUTHOR" >> $GITHUB_ENV
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Verify PR Author
-        run: |
-          echo "PR Author: $PR_AUTHOR"
-          echo "Triggering User: ${{ github.actor }}"
-          if [ "$PR_AUTHOR" != "${{ github.actor }}" ]; then
-            echo "❌ You are not the author of this PR! Approval is denied."
-            exit 1
-          fi
-        
-      # - name: Approve PR
-      #   uses: hmarr/auto-approve-action@v3
-      #   with:
-      #     github-token: ${{ secrets.GITHUB_TOKEN }}
-      #     pull-request-number: ${{ github.event.pull_request.number || inputs.pr_number }}
-
-      - name: Generate JWT and Approve PR
-        run: |
-          # Set environment variables for your GitHub App
-          APP_ID="${{ secrets.SELF_APPROVE_PR_APP_ID }}"
-          INSTALLATION_ID="${{ secrets.SELF_APPROVE_PR_APP_INSTALLATION_ID }}"
-          PRIVATE_KEY="${{ secrets.SELF_APPROVE_PR_APP_PRIVATE_KEY }}"
-          PR_NUMBER="${{ inputs.pr_number }}"
-
-          # JWT header creation
-          now=$(date +%s)
-          iat=$((${now} - 60)) # Issues 60 seconds in the past
-          exp=$((${now} + 600)) # Expires 10 minutes in the future
-          
-          b64enc() { openssl base64 | tr -d '=' | tr '/+' '_-' | tr -d '\n'; }
-          
-          header_json='{
-              "typ":"JWT",
-              "alg":"RS256"
-          }'
-          # Header encode
-          header=$( echo -n "${header_json}" | b64enc )
-          
-          payload_json="{
-              \"iat\":${iat},
-              \"exp\":${exp},
-              \"iss\":\"${APP_ID}\"
-          }"
-          # Payload encode
-          payload=$( echo -n "${payload_json}" | b64enc )
-          
-          # Signature
-          header_payload="${header}"."${payload}"
-          signature=$(
-              openssl dgst -sha256 -sign <(echo -n "${PRIVATE_KEY}") \
-              <(echo -n "${header_payload}") | b64enc
-          )
-          
-          # Create JWT
-          JWT="${header_payload}"."${signature}"
-          printf '%s\n' "JWT: $JWT"
-
-          # Get installation access token
-          INSTALL_TOKEN=$(curl -s \
-            -X POST \
-            -H "Authorization: Bearer $JWT" \
-            -H "Accept: application/vnd.github+json" \
-            https://api.github.com/app/installations/$INSTALLATION_ID/access_tokens | \
-            jq -r .token)
-
-          printf '%s\n' "INSTALL_TOKEN: $INSTALL_TOKEN"
-
-          # Check if the installation token was obtained
-          if [ -z "$INSTALL_TOKEN" ]; then
-            echo "Failed to obtain installation access token"
-            exit 1
-          fi
-
-          # Approve the specified PR using the access token
-          curl -s \
-            -X POST \
-            -H "Authorization: Bearer $INSTALL_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            -d '{"event": "APPROVE"}' \
-            https://api.github.com/repos/${{ github.repository }}/pulls/$PR_NUMBER/reviews
+      - name: Self-Approve Action
+        uses: github-pr-approval
+        with:
+          client_id: ${{ secrets.SELF_APPROVE_PR_APP_ID  }}
+          private_key: ${{ secrets.SELF_APPROVE_PR_APP_PRIVATE_KEY  }}
+          installation_id: ${{ secrets.SELF_APPROVE_PR_APP_INSTALLATION_ID  }}
+          pr_number: ${{ inputs.pr_number }}
