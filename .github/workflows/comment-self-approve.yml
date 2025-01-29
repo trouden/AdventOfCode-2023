@@ -21,25 +21,26 @@ jobs:
           COMMENTER="${{ github.event.comment.user.login }}"
           PR_AUTHOR="${{ github.event.issue.user.login }}"
 
+          APPROVE="false"
+
           # Check if comment contains the approve command
           if [[ "$COMMENT_BODY" == "/selfapprove" ]]; then
             echo "Approval command detected."
             if [[ "$COMMENTER" == "$PR_AUTHOR" ]]; then
               echo "Proceeding with approving PR."
-              echo "Approve='true'" >> $GITHUB_OUTPUT
+              APPROVE="true"
             else
               echo "Commenter is not the creator of the PR, this is not allowed."
-              echo "Approve='false'" >> $GITHUB_OUTPUT
               exit 1
             fi
           else
             echo "No approval command found in comment."
-            echo "Approve='false'" >> $GITHUB_OUTPUT
-            exit 0
           fi
 
+          echo "Approve=$Approve" >> $GITHUB_OUTPUT
+
       - name: Self-Approve Action
-        if: ${{ steps.check-approval.outputs.Approve }} == 'true'
+        if: ${{ steps.check-approval.outputs.Approve == 'true' }}
         uses: ./.github/actions/self-approval
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
