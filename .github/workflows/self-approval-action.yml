@@ -17,7 +17,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Self-Approve Action
-        uses: trouden/AdventOfCode-2023/.github/actions/self-approval@main
+        uses: ../actions/self-approval #trouden/AdventOfCode-2023/.github/actions/self-approval@main
         with:
           client_id: ${{ secrets.SELF_APPROVE_PR_APP_ID  }}
           private_key: ${{ secrets.SELF_APPROVE_PR_APP_PRIVATE_KEY  }}
