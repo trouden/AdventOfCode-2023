@@ -1,4 +1,4 @@
-name: Self Approve PR Action
+name: Manual Self Approve PR Action
 description: Allows approving of your own PRs.
 
 on:
