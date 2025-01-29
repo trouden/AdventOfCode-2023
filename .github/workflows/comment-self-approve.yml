@@ -1,0 +1,44 @@
+name: Automatic Self Approve PR Action by commenting
+description: Allows approving of your own PRs by commenting "/selfapprove"
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  self-approval-action:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.issue.pull_request }} # Ensure it's a PR comment
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Check if Comment is Approve Command
+        run: |
+          COMMENT_BODY="${{ github.event.comment.body }}"
+          COMMENTER="${{ github.event.comment.user.login }}"
+          PR_AUTHOR="${{ github.event.issue.user.login }}"
+
+          # Check if comment contains the approve command
+          if [[ "$COMMENT_BODY" == "/selfapprove" ]]; then
+            echo "Approval command detected."
+            if [[ "$COMMENTER" == "$PR_AUTHOR" ]]; then
+              echo "Proceeding with approving PR."
+            else
+              echo "Commenter is not the creator of the PR, this is not allowed."
+              exit 1
+            fi
+          else
+            echo "No approval command found in comment."
+            exit 0
+          fi
+
+      - name: Self-Approve Action
+        uses: ./.github/actions/self-approval
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          client_id: ${{ secrets.SELF_APPROVE_PR_APP_ID  }}
+          private_key: ${{ secrets.SELF_APPROVE_PR_APP_PRIVATE_KEY  }}
+          installation_id: ${{ secrets.SELF_APPROVE_PR_APP_INSTALLATION_ID  }}
+          pr_number: ${{ github.event.issue.number }}
