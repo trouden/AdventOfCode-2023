@@ -87,7 +87,7 @@ jobs:
             https://api.github.com/app/installations/$INSTALLATION_ID/access_tokens | \
             jq -r .token)
 
-          printf '%s\n' "INSTALL_TOKEN: $INSTALL_TOKEN
+          printf '%s\n' "INSTALL_TOKEN: $INSTALL_TOKEN"
 
           # Check if the installation token was obtained
           if [ -z "$INSTALL_TOKEN" ]; then
