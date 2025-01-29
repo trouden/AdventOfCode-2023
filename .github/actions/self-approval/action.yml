@@ -41,6 +41,7 @@ runs:
           exit 1
         fi
 
+    # Based on: https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-a-json-web-token-jwt-for-a-github-app#example-using-bash-to-generate-a-jwt
     - name: Generate JWT
       shell: bash
       run: |
@@ -77,6 +78,7 @@ runs:
         JWT="${header_payload}"."${signature}"
         echo "JWT=$JWT" >> $GITHUB_ENV
 
+    # See: https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-an-installation-access-token-for-a-github-app
     - name: Get Installation Access Token
       shell: bash
       run: |
