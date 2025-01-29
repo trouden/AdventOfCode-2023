@@ -24,11 +24,12 @@ runs:
       uses: actions/checkout@v4
 
     - name: Fetch PR Author
-      id: get_author
       shell: bash
       run: |
         AUTHOR=$(gh pr view ${{ inputs.pr_number }} --json author --jq '.author.login')
-        echo "PR_AUTHOR=$AUTHOR" >> ${{ inputs.GITHUB_TOKEN }}
+        echo "PR_AUTHOR=$AUTHOR" >> $GITHUB_ENV
+      env:
+        GH_TOKEN: ${{ inputs.GITHUB_TOKEN }}
 
     - name: Verify PR Author
       shell: bash
