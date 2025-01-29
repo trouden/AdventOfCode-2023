@@ -1,12 +1,12 @@
 name: Self Approve PR
 
 on:
-  workflow_dispatch:  # Allows manual triggering from GitHub Actions UI
-        inputs:
-          pr_number:
-            description: "Pull Request Number to Approve"
-            required: true
-            type: number
+  workflow_dispatch: # Allows manual triggering from GitHub Actions UI
+    inputs:
+      pr_number:
+        description: "Pull Request Number to Approve"
+        required: true
+        type: number
 
 jobs:
   approve:
@@ -36,4 +36,4 @@ jobs:
         uses: hmarr/auto-approve-action@v3
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          pull-request-number: ${{ github.event.pull_request.number || inputs.pr_number }} # Allows running from within the dispatcher 
+          pull-request-number: ${{ github.event.pull_request.number || inputs.pr_number }}
