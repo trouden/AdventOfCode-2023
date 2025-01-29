@@ -40,16 +40,10 @@ runs:
           echo "❌ You are not the author of this PR! Approval is denied."
           exit 1
         fi
-    
-    - name: Generate JWT and Approve PR
+
+    - name: Generate JWT
       shell: bash
       run: |
-        # Set environment variables for your GitHub App
-        APP_ID="${{ inputs.client_id }}"
-        INSTALLATION_ID="${{ inputs.installation_id }}"
-        PRIVATE_KEY="${{ inputs.private_key }}"
-        PR_NUMBER="${{ inputs.pr_number }}"
-
         # JWT header creation
         now=$(date +%s)
         iat=$((${now} - 60)) # Issues 60 seconds in the past
@@ -67,7 +61,7 @@ runs:
         payload_json="{
             \"iat\":${iat},
             \"exp\":${exp},
-            \"iss\":\"${APP_ID}\"
+            \"iss\":\"${{ inputs.client_id }}\"
         }"
         # Payload encode
         payload=$( echo -n "${payload_json}" | b64enc )
@@ -75,7 +69,7 @@ runs:
         # Signature
         header_payload="${header}"."${payload}"
         signature=$(
-            openssl dgst -sha256 -sign <(echo -n "${PRIVATE_KEY}") \
+            openssl dgst -sha256 -sign <(echo -n "${{ inputs.private_key }}") \
             <(echo -n "${header_payload}") | b64enc
         )
         
@@ -83,12 +77,15 @@ runs:
         JWT="${header_payload}"."${signature}"
         printf '%s\n' "JWT: $JWT"
 
+    - name: Get Installation Access Token
+      shell: bash
+      run: |
         # Get installation access token
         INSTALL_TOKEN=$(curl -s \
           -X POST \
           -H "Authorization: Bearer $JWT" \
           -H "Accept: application/vnd.github+json" \
-          https://api.github.com/app/installations/$INSTALLATION_ID/access_tokens | \
+          https://api.github.com/app/installations/${{ inputs.installation_id }}/access_tokens | \
           jq -r .token)
 
         printf '%s\n' "INSTALL_TOKEN: $INSTALL_TOKEN"
@@ -99,10 +96,13 @@ runs:
           exit 1
         fi
 
+    - name: Approve PR
+      shell: bash
+      run: |
         # Approve the specified PR using the access token
         curl -s \
           -X POST \
           -H "Authorization: Bearer $INSTALL_TOKEN" \
           -H "Accept: application/vnd.github+json" \
           -d '{"event": "APPROVE"}' \
-          https://api.github.com/repos/${{ github.repository }}/pulls/$PR_NUMBER/reviews
+          https://api.github.com/repos/${{ github.repository }}/pulls/${{ inputs.pr_number }}/reviews
