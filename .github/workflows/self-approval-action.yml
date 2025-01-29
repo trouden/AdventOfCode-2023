@@ -17,7 +17,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Self-Approve Action
-        uses: ./actions/self-approval
+        uses: ./.github/actions/self-approval
         with:
           client_id: ${{ secrets.SELF_APPROVE_PR_APP_ID  }}
           private_key: ${{ secrets.SELF_APPROVE_PR_APP_PRIVATE_KEY  }}
