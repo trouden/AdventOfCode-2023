@@ -37,10 +37,10 @@ jobs:
             echo "No approval command found in comment."
           fi
 
-          echo "Approve=$Approve" >> $GITHUB_OUTPUT
+          echo "APPROVE=$APPROVE" >> $GITHUB_OUTPUT
 
       - name: Self-Approve Action
-        if: ${{ steps.check-approval.outputs.Approve == 'true' }}
+        if: ${{ steps.check-approval.outputs.APPROVE == 'true' }}
         uses: ./.github/actions/self-approval
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
