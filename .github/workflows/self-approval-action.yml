@@ -19,6 +19,7 @@ jobs:
       - name: Self-Approve Action
         uses: ./.github/actions/self-approval
         with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           client_id: ${{ secrets.SELF_APPROVE_PR_APP_ID  }}
           private_key: ${{ secrets.SELF_APPROVE_PR_APP_PRIVATE_KEY  }}
           installation_id: ${{ secrets.SELF_APPROVE_PR_APP_INSTALLATION_ID  }}
