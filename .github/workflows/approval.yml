@@ -10,7 +10,7 @@ on:
         type: number
 
 jobs:
-  approve:
+  self-approval-action:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository

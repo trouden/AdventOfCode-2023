@@ -16,7 +16,7 @@ inputs:
     required: true
 
 jobs:
-  approve:
+  self-approval:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
