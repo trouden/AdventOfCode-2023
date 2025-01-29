@@ -21,14 +21,14 @@ jobs:
           COMMENTER="${{ github.event.comment.user.login }}"
           PR_AUTHOR="${{ github.event.issue.user.login }}"
 
-          APPROVE="false"
+          APPROVE='false'
 
           # Check if comment contains the approve command
           if [[ "$COMMENT_BODY" == "/selfapprove" ]]; then
             echo "Approval command detected."
             if [[ "$COMMENTER" == "$PR_AUTHOR" ]]; then
               echo "Proceeding with approving PR."
-              APPROVE="true"
+              APPROVE='true'
             else
               echo "Commenter is not the creator of the PR, this is not allowed."
               exit 1
