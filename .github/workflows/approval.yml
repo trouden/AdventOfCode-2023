@@ -1,0 +1,13 @@
+name: Approval-Action
+run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
+on: [push]
+jobs:
+  Approval-Action:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Approve Pull Request
+        uses: juliangruber/approve-pull-request-action@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          number: 1
+          repo: juliangruber/approve-pull-request-action # optional
