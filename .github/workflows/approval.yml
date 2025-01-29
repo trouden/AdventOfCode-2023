@@ -1,0 +1,39 @@
+name: Self Approve PR
+
+on:
+  workflow_dispatch: # Allows manual triggering from GitHub Actions UI
+    inputs:
+      pr_number:
+        description: "Pull Request Number to Approve"
+        required: true
+        type: number
+
+jobs:
+  approve:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Fetch PR Author
+        id: get_author
+        run: |
+          AUTHOR=$(gh pr view ${{ inputs.pr_number }} --json author --jq '.author.login')
+          echo "PR_AUTHOR=$AUTHOR" >> $GITHUB_ENV
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify PR Author
+        run: |
+          echo "PR Author: $PR_AUTHOR"
+          echo "Triggering User: ${{ github.actor }}"
+          if [ "$PR_AUTHOR" != "${{ github.actor }}" ]; then
+            echo "❌ You are not the author of this PR! Approval is denied."
+            exit 1
+          fi
+        
+      - name: Approve PR
+        uses: hmarr/auto-approve-action@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          pull-request-number: ${{ github.event.pull_request.number || inputs.pr_number }}
