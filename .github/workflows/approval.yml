@@ -32,8 +32,27 @@ jobs:
             exit 1
           fi
         
-      - name: Approve PR
-        uses: hmarr/auto-approve-action@v3
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          pull-request-number: ${{ github.event.pull_request.number || inputs.pr_number }}
+      # - name: Approve PR
+      #   uses: hmarr/auto-approve-action@v3
+      #   with:
+      #     github-token: ${{ secrets.GITHUB_TOKEN }}
+      #     pull-request-number: ${{ github.event.pull_request.number || inputs.pr_number }}
+
+      - name: Generate GitHub App Token
+        id: generate_token
+        run: |
+          # Install dependencies for generating a GitHub App token
+          curl -sSL https://github.com/cli/cli/releases/download/v2.24.0/gh_2.24.0_linux_amd64.tar.gz | tar -xz
+          sudo mv gh_2.24.0_linux_amd64/bin/gh /usr/local/bin
+          
+          # Authenticate and create a GitHub App token
+          gh auth login --with-token < ${{ secrets.SELF_APPROVE_PR_APP_PRIVATE_KEY }}
+          TOKEN=$(gh auth status --json token -q ".token")
+          echo "APP_TOKEN=$TOKEN" >> $GITHUB_ENV
+
+      - name: Approve Specified PR Using GitHub App
+        run: |
+          curl -X POST \
+            -H "Authorization: Bearer ${{ secrets.SELF_APPROVE_PR_APP_PRIVATE_KEY }}" \
+            -d '{"event":"APPROVE"}' \
+            https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number || inputs.pr_number }}/reviews
