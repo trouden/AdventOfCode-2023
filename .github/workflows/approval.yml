@@ -46,21 +46,39 @@ jobs:
           PRIVATE_KEY="${{ secrets.SELF_APPROVE_PR_APP_PRIVATE_KEY }}"
           PR_NUMBER="${{ inputs.pr_number }}"
 
-          # Generate JWT (JSON Web Token) for GitHub App authentication
-          JWT=$(echo -n "{\"iat\": $(date +%s), \"exp\": $(($(date +%s) + 600)), \"iss\": \"$APP_ID\"}" | \
-            openssl dgst -sha256 -binary | \
-            openssl enc -base64 -A -out /tmp/jwt.txt)
-
-          echo $JWT
-          echo "file content:"
-          cat /tmp/jwt.txt
-
-          # Check if the JWT token was obtained
-          if [ -z "$JWT" ]; then
-            echo "Failed to create JWT token"
-            exit 1
-          fi
+          # JWT header creation
+          now=$(date +%s)
+          iat=$((${now} - 60)) # Issues 60 seconds in the past
+          exp=$((${now} + 600)) # Expires 10 minutes in the future
           
+          b64enc() { openssl base64 | tr -d '=' | tr '/+' '_-' | tr -d '\n'; }
+          
+          header_json='{
+              "typ":"JWT",
+              "alg":"RS256"
+          }'
+          # Header encode
+          header=$( echo -n "${header_json}" | b64enc )
+          
+          payload_json="{
+              \"iat\":${iat},
+              \"exp\":${exp},
+              \"iss\":\"${APP_ID}\"
+          }"
+          # Payload encode
+          payload=$( echo -n "${payload_json}" | b64enc )
+          
+          # Signature
+          header_payload="${header}"."${payload}"
+          signature=$(
+              openssl dgst -sha256 -sign <(echo -n "${PRIVATE_KEY}") \
+              <(echo -n "${header_payload}") | b64enc
+          )
+          
+          # Create JWT
+          JWT="${header_payload}"."${signature}"
+          printf '%s\n' "JWT: $JWT"
+
           # Get installation access token
           INSTALL_TOKEN=$(curl -s \
             -X POST \
@@ -69,7 +87,7 @@ jobs:
             https://api.github.com/app/installations/$INSTALLATION_ID/access_tokens | \
             jq -r .token)
 
-          echo $INSTALL_TOKEN
+          printf '%s\n' "INSTALL_TOKEN: $INSTALL_TOKEN
 
           # Check if the installation token was obtained
           if [ -z "$INSTALL_TOKEN" ]; then
