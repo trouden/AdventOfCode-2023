@@ -44,12 +44,22 @@ jobs:
           APP_ID="${{ secrets.SELF_APPROVE_PR_APP_ID }}"
           INSTALLATION_ID="${{ secrets.SELF_APPROVE_PR_APP_INSTALLATION_ID }}"
           PRIVATE_KEY="${{ secrets.SELF_APPROVE_PR_APP_PRIVATE_KEY }}"
-          PR_NUMBER="${{ github.event.pull_request.number || inputs.pr_number }}"
+          PR_NUMBER="${{ inputs.pr_number }}"
 
           # Generate JWT (JSON Web Token) for GitHub App authentication
           JWT=$(echo -n "{\"iat\": $(date +%s), \"exp\": $(($(date +%s) + 600)), \"iss\": \"$APP_ID\"}" | \
             openssl dgst -sha256 -binary | \
             openssl enc -base64 -A -out /tmp/jwt.txt)
+
+          echo $JWT
+          echo "file content:"
+          cat /tmp/jwt.txt
+
+          # Check if the JWT token was obtained
+          if [ -z "$JWT" ]; then
+            echo "Failed to create JWT token"
+            exit 1
+          fi
           
           # Get installation access token
           INSTALL_TOKEN=$(curl -s \
@@ -59,6 +69,14 @@ jobs:
             https://api.github.com/app/installations/$INSTALLATION_ID/access_tokens | \
             jq -r .token)
 
+          echo $INSTALL_TOKEN
+
+          # Check if the installation token was obtained
+          if [ -z "$INSTALL_TOKEN" ]; then
+            echo "Failed to obtain installation access token"
+            exit 1
+          fi
+
           # Approve the specified PR using the access token
           curl -s \
             -X POST \
@@ -66,8 +84,3 @@ jobs:
             -H "Accept: application/vnd.github+json" \
             -d '{"event": "APPROVE"}' \
             https://api.github.com/repos/${{ github.repository }}/pulls/$PR_NUMBER/reviews
-
-        # env:
-        #   APP_ID: ${{ secrets.SELF_APPROVE_PR_APP_ID }}
-        #   INSTALLATION_ID: ${{ secrets.SELF_APPROVE_PR_APP_INSTALLATION_ID }}
-        #   APP_PRIVATE_KEY: ${{ secrets.SELF_APPROVE_PR_APP_PRIVATE_KEY }}
