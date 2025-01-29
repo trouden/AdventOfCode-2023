@@ -11,6 +11,9 @@ jobs:
     if: ${{ github.event.issue.pull_request }} # Ensure it's a PR comment
 
     steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
       - name: Check if Comment is Approve Command
         run: |
           COMMENT_BODY="${{ github.event.comment.body }}"
